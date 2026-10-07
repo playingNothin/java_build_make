@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # Copyright (C) 2012 The Android Open Source Project
 #
@@ -13,14 +13,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
+# Moto G20 (java): ported from python2 to python3 (print function); the
+# original used py2 print statements, which fail on modern build hosts.
 
 import sys
-import os
-
-try:
-  from hashlib import sha1
-except ImportError:
-  from sha import sha as sha1
+from hashlib import sha1
 
 if len(sys.argv) < 2:
   sys.exit(0)
@@ -52,8 +50,8 @@ for item in sys.argv[2:]:
   try:
     f = open(fn + ".sha1")
   except IOError:
-    if not bad: print
-    print "*** Error opening \"%s.sha1\"; can't verify %s" % (fn, key)
+    if not bad: print()
+    print("*** Error opening \"%s.sha1\"; can't verify %s" % (fn, key))
     bad = True
     continue
   for line in f:
@@ -63,17 +61,17 @@ for item in sys.argv[2:]:
     versions[h] = v
 
   if digest not in versions:
-    if not bad: print
-    print "*** SHA-1 hash of \"%s\" doesn't appear in \"%s.sha1\"" % (fn, fn)
+    if not bad: print()
+    print("*** SHA-1 hash of \"%s\" doesn't appear in \"%s.sha1\"" % (fn, fn))
     bad = True
     continue
 
   if versions[digest] not in values:
-    if not bad: print
-    print "*** \"%s\" is version %s; not any %s allowed by \"%s\"." % (
-        fn, versions[digest], key, sys.argv[1])
+    if not bad: print()
+    print("*** \"%s\" is version %s; not any %s allowed by \"%s\"." % (
+        fn, versions[digest], key, sys.argv[1]))
     bad = True
 
 if bad:
-  print
+  print()
   sys.exit(1)

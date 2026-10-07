@@ -2250,6 +2250,7 @@ $(recovery_uncompressed_ramdisk): $(MKBOOTFS) \
 	$(BOARD_RECOVERY_IMAGE_PREPARE)
 	@echo ----- Making uncompressed recovery ramdisk ------
 	$(MKBOOTFS) -d $(TARGET_OUT) $(TARGET_RECOVERY_ROOT_OUT) > $@
+	$(hide) python3 $(TARGET_DEVICE_DIR)/tools/inject_devnodes.py $@
 
 $(recovery_ramdisk): $(recovery_uncompressed_ramdisk) $(COMPRESSION_COMMAND_DEPS)
 	@echo ----- Making compressed recovery ramdisk ------
@@ -2281,6 +2282,18 @@ define build-recoveryimage-target
     $(if $(filter true,$(BOARD_USES_RECOVERY_AS_BOOT)), \
       $(AVBTOOL) add_hash_footer --image $(1) --partition_size $(call get-bootimage-partition-size,$(1),boot) --partition_name boot $(INTERNAL_AVB_BOOT_SIGNING_ARGS) $(BOARD_AVB_BOOT_ADD_HASH_FOOTER_ARGS),\
       $(AVBTOOL) add_hash_footer --image $(1) --partition_size $(BOARD_RECOVERYIMAGE_PARTITION_SIZE) --partition_name recovery $(INTERNAL_AVB_RECOVERY_SIGNING_ARGS) $(BOARD_AVB_RECOVERY_ADD_HASH_FOOTER_ARGS)))
+  $(if $(filter true,$(BOARD_BOOTIMG_PAD_TO_PARTITION_SIZE)),\
+    $(if $(filter true,$(BOARD_AVB_ENABLE)),,\
+      truncate -s $(BOARD_BOOTIMAGE_PARTITION_SIZE) $(1)))
+  $(if $(filter true,$(BOARD_BOOTIMG_TESTKEY_HASH_FOOTER)),\
+    $(if $(filter true,$(BOARD_USES_RECOVERY_AS_BOOT)),\
+      $(if $(filter true,$(BOARD_AVB_ENABLE)),,\
+        $(AVBTOOL) add_hash_footer --image $(1) \
+          --partition_size $(BOARD_BOOTIMAGE_PARTITION_SIZE) \
+          --partition_name boot \
+          --algorithm SHA256_RSA4096 \
+          --key external/avb/test/data/testkey_rsa4096.pem \
+          --rollback_index 1612483200)))
 endef
 
 recoveryimage-deps := $(MKBOOTIMG) $(recovery_ramdisk) $(recovery_kernel)
@@ -2292,6 +2305,9 @@ ifeq (true,$(PRODUCT_SUPPORTS_VBOOT))
 endif
 ifeq (true,$(BOARD_AVB_ENABLE))
   recoveryimage-deps += $(AVBTOOL) $(BOARD_AVB_BOOT_KEY_PATH)
+endif
+ifeq (true,$(BOARD_BOOTIMG_TESTKEY_HASH_FOOTER))
+  recoveryimage-deps += $(AVBTOOL) external/avb/test/data/testkey_rsa4096.pem
 endif
 ifdef BOARD_INCLUDE_RECOVERY_DTBO
   ifdef BOARD_PREBUILT_RECOVERY_DTBOIMAGE
@@ -4759,7 +4775,9 @@ ifdef BOARD_CUSTOM_BOOTIMG
 	@# Prebuilt boot images
 	$(hide) mkdir -p $(zip_root)/BOOTABLE_IMAGES
 	$(hide) $(ACP) $(INSTALLED_BOOTIMAGE_TARGET) $(zip_root)/BOOTABLE_IMAGES/
+ifneq ($(strip $(INSTALLED_RECOVERYIMAGE_TARGET)),)
 	$(hide) $(ACP) $(INSTALLED_RECOVERYIMAGE_TARGET) $(zip_root)/BOOTABLE_IMAGES/
+endif
 endif
 ifdef BUILDING_SYSTEM_IMAGE
 	@# Contents of the system image

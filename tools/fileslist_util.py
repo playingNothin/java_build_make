@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # Copyright (C) 2016 The Android Open Source Project
 #
@@ -27,7 +27,7 @@ def PrintCanonicalList(path):
   with open(path) as jf:
     data = json.load(jf)
   for line in data:
-    print "{0:12d}  {1}".format(line["Size"], line["Name"])
+    print("{0:12d}  {1}".format(line["Size"], line["Name"]))
 
 def PrintUsage(name):
   print("""
@@ -39,7 +39,7 @@ Usage: %s -[nc] json_files_list
 def main(argv):
   try:
     opts, args = getopt.getopt(argv[1:], "nc", "")
-  except getopt.GetoptError, err:
+  except getopt.GetoptError as err:
     print(err)
     PrintUsage(argv[0])
     sys.exit(2)

@@ -54,8 +54,8 @@ class TagFile(object):
 
     if file_object is None:
       try:
-        file_object = open(filename, "rb")
-      except (IOError, OSError), e:
+        file_object = open(filename, "r")
+      except (IOError, OSError) as e:
         self.AddError(str(e))
         return
 
@@ -100,7 +100,7 @@ class TagFile(object):
 
         self.tags.append(Tag(tag, tagname, description,
                              self.filename, self.linenum))
-    except (IOError, OSError), e:
+    except (IOError, OSError) as e:
       self.AddError(str(e))
 
 
@@ -127,9 +127,9 @@ def WriteOutput(output_file, data):
       out = sys.stdout
       output_file = "<stdout>"
     else:
-      out = open(output_file, "wb")
+      out = open(output_file, "w")
     out.write(data)
     out.close()
-  except (IOError, OSError), e:
-    print >> sys.stderr, "failed to write %s: %s" % (output_file, e)
+  except (IOError, OSError) as e:
+    print("failed to write %s: %s" % (output_file, e), file=sys.stderr)
     sys.exit(1)
